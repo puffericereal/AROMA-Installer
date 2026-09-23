@@ -20,7 +20,7 @@ jobs:
     - name: Install toolchain (arm)
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make
+        sudo apt-get install -y build-essential gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make libpng-dev zlib1g-dev
 
     - name: Compile
       run: |
@@ -28,13 +28,17 @@ jobs:
         export CC=arm-linux-gnueabihf-gcc
         export CXX=arm-linux-gnueabihf-g++
         export ARCH=arm
-        make clean
-        make -j$(nproc)
+        if [ -f "Makefile" ]; then
+          make -j$(nproc) || make
+        elif [ -f "src/Makefile" ]; then
+          cd src && make -j$(nproc)
+        fi
 
     - name: Prepare artifact
       run: |
         mkdir -p output
-        cp aroma_source/out/aroma_installer output/update-binary
+        find aroma_source -name "aroma_installer" -exec cp {} output/update-binary \; || \
+        find aroma_source -name "aroma" -exec cp {} output/update-binary \;
 
     - name: Upload
       uses: actions/upload-artifact@v4
