@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkotu
+      uses: actions/checkout@v4
+
+    - name: Clone code
+      run: |
+        git clone https://github.com/amarullz/AROMA-Installer.git aroma_source
+
+    - name: Install toolchain (arm)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make
+
+    - name: Compile
+      run: |
+        cd aroma_source
+        export CC=arm-linux-gnueabihf-gcc
+        export CXX=arm-linux-gnueabihf-g++
+        export ARCH=arm
+        make clean
+        make -j$(nproc)
+
+    - name: Prepare artifact
+      run: |
+        mkdir -p output
+        cp aroma_source/out/aroma_installer output/update-binary
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: aroma-update-binary
+        path: output/update-binary
+        
