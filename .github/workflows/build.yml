@@ -37,12 +37,20 @@ jobs:
     - name: Prepare artifact
       run: |
         mkdir -p output
-        find aroma_source -name "aroma_installer" -exec cp {} output/update-binary \; || \
-        find aroma_source -name "aroma" -exec cp {} output/update-binary \;
+        ls -R aroma_source/
+
+        BIN_FILE=$(find aroma_source -type f \( -name "*aroma*" -o -name "*update-binary*" \) ! -name "*.c" ! -name "*.h" ! -name "*.o" ! -name "*.mk" | head -n 1)
+        
+        if [ -n "$BIN_FILE" ]; then
+          echo "Found binary at: $BIN_FILE"
+          cp "$BIN_FILE" output/update-binary
+        else
+          echo "ERROR: Could not locate compiled binary file."
+          exit 1
+        fi
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
         name: aroma-update-binary
         path: output/update-binary
-        
